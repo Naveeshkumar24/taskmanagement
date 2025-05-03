@@ -17,7 +17,7 @@ func main() {
 	conn := NewConnection()
 	defer conn.DB.Close()
 	server := &http.Server{
-		Addr:    os.Getenv("PORT"),
+		Addr:    ":" + os.Getenv("PORT"),
 		Handler: registerTaskRouter(conn.DB),
 	}
 	query := database.NewQuery(conn.DB)
