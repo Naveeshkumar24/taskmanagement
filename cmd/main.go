@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/naveeshkumar24/internal/middleware"
 	"github.com/naveeshkumar24/pkg/database"
 )
 
@@ -18,12 +19,13 @@ func main() {
 	defer conn.DB.Close()
 	server := &http.Server{
 		Addr:    ":" + os.Getenv("PORT"),
-		Handler: registerTaskRouter(conn.DB),
+		Handler: middleware.CorsMiddleware(registerTaskRouter(conn.DB)),
 	}
 	query := database.NewQuery(conn.DB)
 	err := query.CreateTaskTables()
 	if err != nil {
-		log.Fatal("Unable to create database %v", err)
+		log.Fatalf("Unable to create database: %v", err)
+
 	}
 
 	log.Printf("server is running at port %s", os.Getenv("PORT"))

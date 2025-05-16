@@ -48,14 +48,32 @@ func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate user credentials and get the user object
 	user, err := h.userRepo.Login(creds.Email, creds.Password)
 	if err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	user.Password = "" // hide password
-	utils.Encode(w, user)
+	// Generate JWT token
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role)
+	if err != nil {
+		http.Error(w, "Could not generate token", http.StatusInternalServerError)
+		return
+	}
+
+	user.Password = ""
+
+	// 2) wrap into a single response object
+	resp := map[string]interface{}{
+		"user":  user,
+		"token": token,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Send the response with the user and token
+	utils.Encode(w, resp)
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {

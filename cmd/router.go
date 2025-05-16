@@ -2,17 +2,12 @@ package main
 
 import (
 	"database/sql"
-
 	"github.com/gorilla/mux"
 	"github.com/naveeshkumar24/internal/handlers"
 	"github.com/naveeshkumar24/internal/middleware"
 	"github.com/naveeshkumar24/repository"
 )
 
-// registerTaskRouter sets up and configures the HTTP routes for task management operations.
-// It initializes a new router with CORS middleware and defines endpoints for creating,
-// fetching, updating, deleting, listing, and getting the dashboard view of tasks.
-// The function takes a database connection as input and returns a configured router.
 func registerTaskRouter(db *sql.DB) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(middleware.CorsMiddleware)

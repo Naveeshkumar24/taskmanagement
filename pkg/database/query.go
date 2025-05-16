@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -71,15 +72,19 @@ func (q *Query) CreateTaskTables() error {
 // ======================== User Functions ========================
 
 func (q *Query) RegisterUser(user models.User) error {
+	// Check if the username already exists
+
+	// Proceed to insert the new user if no duplicates were found
 	_, err := q.db.Exec(`
-		INSERT INTO users (username, email, password, role) 
-		VALUES ($1, $2, $3, $4)
-	`, user.Username, user.Email, user.Password, user.Role)
+        INSERT INTO users (username, email, password, role) 
+        VALUES ($1, $2, $3, $4)
+    `, user.Username, user.Email, user.Password, user.Role)
 
 	if err != nil {
 		log.Printf("Failed to register user: %v", err)
-		return err
+		return fmt.Errorf("error registering user: %w", err)
 	}
+
 	return nil
 }
 
@@ -106,10 +111,23 @@ func (q *Query) GetUserByID(id int) (models.User, error) {
 // ======================== Task Functions ========================
 
 func (q *Query) CreateTask(task models.Task) error {
-	_, err := q.db.Exec(`
-		INSERT INTO tasks (title, description, due_date, priority, status, created_by, assigned_to)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, task.Title, task.Description, task.DueDate, task.Priority, task.Status, task.CreatedBy, task.AssignedTo)
+	// Check if the user exists
+	var userCount int
+	err := q.db.QueryRow("SELECT COUNT(*) FROM users WHERE id = $1", task.CreatedBy).Scan(&userCount)
+	if err != nil {
+		log.Printf("Failed to check user existence: %v", err)
+		return err
+	}
+
+	if userCount == 0 {
+		return fmt.Errorf("user with ID %d does not exist", task.CreatedBy)
+	}
+
+	// Proceed with task insertion
+	_, err = q.db.Exec(`
+        INSERT INTO tasks (title, description, due_date, priority, status, created_by, assigned_to)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, task.Title, task.Description, task.DueDate, task.Priority, task.Status, task.CreatedBy, task.AssignedTo)
 
 	if err != nil {
 		log.Printf("Failed to create task: %v", err)
